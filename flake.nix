@@ -13,6 +13,7 @@
           libGL
           glfw
           glew
+          fmt
         ];
       };
     });
