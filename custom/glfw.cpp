@@ -27,7 +27,7 @@ namespace custom {
 	GLFWwindow* glfw_create_window(int width, int height, const char* title) {
 		auto window = glfwCreateWindow(width, height, title, NULL, NULL);
 		if (window == NULL) {
-			cout << "Failed to create GLFW window." << endl;
+			cerr << "Failed to create GLFW window." << endl;
 			glfwTerminate();
 			exit(EXIT_FAILURE);
 		}

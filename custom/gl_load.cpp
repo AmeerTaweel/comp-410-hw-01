@@ -25,8 +25,8 @@ namespace custom {
 			glewExperimental = GL_TRUE;
 			auto err = glewInit();
 			if(err != GLEW_OK) {
-				cout << "ERROR: Initializing GLEW failed:" << endl;
-				cout << "\t" << glewGetErrorString(err) << endl;
+				cerr << "ERROR: Initializing GLEW failed:" << endl;
+				cerr << "\t" << glewGetErrorString(err) << endl;
 				exit(EXIT_FAILURE);
 			}
 		#endif
