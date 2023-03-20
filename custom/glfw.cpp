@@ -33,6 +33,10 @@ namespace custom {
 		}
 		return window;
 	}
+
+	void glfw_win_resize_callback(GLFWwindow* window, int width, int height) {
+		glViewport(0, 0, width, height);
+	}
 }
 
 #endif // __CUSTOM_GLFW__
