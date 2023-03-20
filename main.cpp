@@ -4,6 +4,9 @@
 // Load OpenGL function pointers
 #include "custom/gl_load.cpp"
 
+// Enable OpenGL Errors / Warnings
+#include "custom/gl_debug.cpp"
+
 // GLFW
 // Handles windowing operations and keyboard/mouse events
 #include "custom/glfw.cpp"
@@ -28,6 +31,9 @@ int main() {
 
 	// Load OpenGL function pointers
 	custom::gl_load();
+
+	// Enable OpenGL Errors / Warnings
+	custom::gl_debug_enable();
 
 	// Initialize viewport
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
