@@ -3,3 +3,6 @@
 
 # LSP Cache
 .ccls-cache/
+
+# Binary Files
+**/*.out
