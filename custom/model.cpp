@@ -63,6 +63,8 @@ namespace custom {
 		for (auto& i : *(model->triangles)) file >> i;
 
 		// Normalize vertices
+		// Make sure all coordinates are between -1 and 1
+		// All models become on a standard scale
 		auto max = *max_element(
 			model->vertices->begin(),
 			model->vertices->end()
