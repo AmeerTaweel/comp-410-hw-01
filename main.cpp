@@ -55,7 +55,7 @@ int main() {
 	auto program = custom::gl_make_program("vertex_shader.glsl", "fragment_shader.glsl");
 	glUseProgram(program);
 
-	auto model = custom::model_sg0_load("bunny.tlst");
+	auto model = custom::model_tlst_load("bunny.tlst");
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);  

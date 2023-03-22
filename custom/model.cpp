@@ -47,7 +47,7 @@ namespace custom {
 		~Model() { }
 	};
 
-	unique_ptr<Model> model_sg0_load(const char* filename) {
+	unique_ptr<Model> model_tlst_load(const char* filename) {
 		ifstream file;
 		file.open(filename);
 
