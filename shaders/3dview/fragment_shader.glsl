@@ -3,6 +3,5 @@
 out vec4 color;
 
 void main() {
-    // Amber Color
-    color = vec4(1.0, 0.7568627451, 0.0274509804, 1.0);
+    color = vec4(1.0, 0.7568627451, 0.0274509804, 1.0); // Amber Color
 }
