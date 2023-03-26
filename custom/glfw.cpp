@@ -21,7 +21,7 @@ namespace custom {
 		// Required to work on macOS
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 		// Force floating mode in tiling window managers
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		// glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	}
 
 	GLFWwindow* glfw_create_window(int width, int height, const char* title) {
