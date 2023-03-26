@@ -62,6 +62,8 @@ Run this command from the root project directory:
 ./main.out
 ```
 
+**NOTE:** The command above assumes you did the compilation step.
+
 ### `3dview`
 
 Run this command from the root project directory:
@@ -69,6 +71,8 @@ Run this command from the root project directory:
 ```bash
 ./3dview.out
 ```
+
+**NOTE:** The command above assumes you did the compilation step.
 
 You can change which model to load, and which transformations to apply from the
 constants section in `3dview.cpp`.
