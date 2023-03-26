@@ -78,9 +78,9 @@ float g_y_acc;
 // Color values
 int g_color_index = 0;
 vector<glm::vec4> g_colors = {
-	glm::vec4(1.0, 1.0, 0.0, 1.0),
-	glm::vec4(0.0, 1.0, 1.0, 1.0),
-	glm::vec4(1.0, 0.0, 1.0, 1.0)
+	glm::vec4(1.0000000000f, 0.7568627451f, 0.0274509804f, 1.0f), // Yellow
+	glm::vec4(0.2980392157f, 0.6862745098f, 0.3137254902f, 1.0f), // Green
+	glm::vec4(0.9568627451f, 0.2627450980f, 0.2117647059f, 1.0f)  // Red
 };
 
 // Possible 3D models
@@ -98,6 +98,7 @@ vector<GLenum> g_modes = { GL_LINE, GL_FILL };
 /*************************/
 
 // Callbacks
+void win_resize_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
@@ -126,7 +127,7 @@ int main() {
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	// Callbacks
-	glfwSetFramebufferSizeCallback(window, custom::glfw_win_resize_callback);
+	glfwSetFramebufferSizeCallback(window, win_resize_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
@@ -206,6 +207,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	if (button == GLFW_MOUSE_BUTTON_RIGHT) g_model_index++;
 	// Change polygon mode on left-click
 	else if (button == GLFW_MOUSE_BUTTON_LEFT) g_mode_index++;
+}
+
+void win_resize_callback(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
 }
 
 /******************************************************************************/
