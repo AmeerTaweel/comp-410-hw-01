@@ -206,8 +206,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	else if (button == GLFW_MOUSE_BUTTON_LEFT) g_mode_index++;
 }
 
+// Resize while keeping aspect-ratio
 void win_resize_callback(GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
+	auto size = width < height ? width : height;
+	glViewport((width - size) / 2, (height - size) / 2, size, size);
 }
 
 /******************************************************************************/
