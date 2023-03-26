@@ -1,4 +1,9 @@
-# HW 1
+# COMP410 - HW #1 - Bouncing Objects
+
+## Team
+
+- Ameer Taweel (ataweel20)
+- Omar Al Asaad (oasaad20)
 
 ## Dependencies
 
