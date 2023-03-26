@@ -1,36 +1,112 @@
-// Standard I/O
+/******************************************************************************/
+
+/***********/
+/* Imports */
+/***********/
+
+/* STD */
+
 #include <iostream>
 
-// Load OpenGL function pointers
-#include "custom/gl_load.cpp"
+using namespace std;
 
-// Enable OpenGL Errors / Warnings
-#include "custom/gl_debug.cpp"
+/* Custom Imports */
 
-// Compile / Link OpenGL Shaders
-#include "custom/gl_shader.cpp"
+#include "custom/gl_load.cpp"    // Load OpenGL function pointers
+#include "custom/gl_debug.cpp"   // Enable OpenGL errors/warnings
+#include "custom/gl_shader.cpp"  // Compile/link OpenGL shaders
+#include "custom/model.cpp"      // Model loading and utils
+#include "custom/gl_helpers.cpp" // OpenGL helpers
 
-// Load Models / Model Utils
-#include "custom/model.cpp"
+/* External */
 
 // GLFW
 // Handles windowing operations and keyboard/mouse events
 #include "custom/glfw.cpp"
 
-// Use the standard library namespace by default
-using namespace std;
+// GLM
+// OpenGL math library
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
+/******************************************************************************/
+
+/*************/
+/* Constants */
+/*************/
+
+// OpenGL version
 #define OPEN_GL_MAJOR_VERSION 3
 #define OPEN_GL_MINOR_VERSION 3
 
+// Shader locations
+#define V_SHADER "shaders/main/vertex_shader.glsl"
+#define F_SHADER "shaders/main/fragment_shader.glsl"
+
+// Window constants
 #define WINDOW_WIDTH  800
-#define WINDOW_HEIGHT 600
+#define WINDOW_HEIGHT 800
 #define WINDOW_TITLE  "ZERO NO GATO"
 
-/* template <class T> */
-/* inline void glBufferData(GLenum target, const vector<T>& v, GLenum usage) { */
-/* 	    glBufferData(target, v.size() * sizeof(T), &v[0], usage); */
-/* } */
+// State constants
+#define STATE_PAUSE 0
+#define STATE_RUN   1
+#define STATE_RESET 2
+
+// Simulation constants
+#define GROUND         -1.00f
+#define HIT_FACTOR      0.85f
+#define REVERSE_FACTOR -1.00f
+
+/******************************************************************************/
+
+/********************/
+/* Global Variables */
+/********************/
+
+// Current state
+int g_state = STATE_RESET;
+
+// Simulation variables
+float g_x_pos;
+float g_y_pos;
+float g_x_vel;
+float g_y_vel;
+float g_y_acc;
+
+// Color values
+int g_color_index = 0;
+vector<glm::vec4> g_colors = {
+	glm::vec4(1.0, 1.0, 0.0, 1.0),
+	glm::vec4(0.0, 1.0, 1.0, 1.0),
+	glm::vec4(1.0, 0.0, 1.0, 1.0)
+};
+
+// Possible 3D models
+int g_model_index = 0;
+vector<custom::Model> g_models;
+
+// Possible polygon modes
+int g_mode_index = 0;
+vector<GLenum> g_modes = { GL_LINE, GL_FILL };
+
+/******************************************************************************/
+
+/*************************/
+/* Function Declarations */
+/*************************/
+
+// Callbacks
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+
+void update(custom::Program program, custom::Model model);
+void reset(custom::Program program, custom::Model model);
+void draw(custom::Program program, custom::Model model);
+void print_help();
+
+/******************************************************************************/
 
 int main() {
 	// Initialize GLFW
@@ -51,50 +127,48 @@ int main() {
 
 	// Callbacks
 	glfwSetFramebufferSizeCallback(window, custom::glfw_win_resize_callback);
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
-	auto program = custom::gl_make_program("vertex_shader.glsl", "fragment_shader.glsl");
-	glUseProgram(program);
+	// Load program
+	auto program = custom::gl_make_program(V_SHADER, F_SHADER);
+	program.use();
 
-	auto model = custom::model_tlst_load("bunny.tlst");
+	// Load models
+	g_models.push_back(custom::model_tlst_load("models/sphere.tlst"));
+	g_models.push_back(custom::model_tlst_load("models/cube.tlst"));
+	g_models.push_back(custom::model_tlst_load("models/bunny.tlst"));
 
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);  
+	// Put model data in buffers
+	for (auto& model : g_models) {
+		glGenVertexArrays(1, &model.VAO);  
+		glGenBuffers(1, &model.VBO); 
+		glGenBuffers(1, &model.EBO);
 
-	unsigned int VBO;
-	glGenBuffers(1, &VBO); 
+		glBindVertexArray(model.VAO);
 
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
+		glBindBuffer(GL_ARRAY_BUFFER, model.VBO);
+		custom::glBufferDataV(GL_ARRAY_BUFFER, model.vertices, GL_STATIC_DRAW);
 
-	// ..:: Initialization code :: ..
-	// 1. bind Vertex Array Object
-	glBindVertexArray(VAO);
-	// 2. copy our vertices array in a vertex buffer for OpenGL to use
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	/* glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); */
-	/* glBufferData(GL_ARRAY_BUFFER, *(model->vertices), GL_STATIC_DRAW); */
-	glBufferData(GL_ARRAY_BUFFER, model->vertices->size() * sizeof(float), &model->vertices->front(), GL_STATIC_DRAW);
-	// 3. copy our index array in a element buffer for OpenGL to use
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	/* glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); */
-	/* glBufferData(GL_ARRAY_BUFFER, *(model->triangles), GL_STATIC_DRAW); */
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->triangles->size() * sizeof(int), &model->triangles->front(), GL_STATIC_DRAW);
-	// 4. then set the vertex attributes pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.EBO);
+		custom::glBufferDataV(GL_ELEMENT_ARRAY_BUFFER, model.triangles, GL_STATIC_DRAW);
 
-	/* glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); */
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glVertexAttribPointer(0, VERTEX_3D_COMPONENTS, GL_FLOAT, GL_TRUE, 0, (void*) 0);
+		glEnableVertexAttribArray(0);
+	}
 
 	// Render loop
 	while(!glfwWindowShouldClose(window)) {
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, model->triangle_count * 3, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
-
+		auto model = g_models[g_model_index % g_models.size()];
+		if (g_state != STATE_PAUSE) {
+			if (g_state == STATE_RUN) {
+				update(program, model);
+			} else {
+				reset(program, model);
+				g_state = STATE_PAUSE;
+			}
+		}
+		draw(program, model);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -103,3 +177,101 @@ int main() {
 	glfwTerminate();
 	return EXIT_SUCCESS;
 }
+
+/******************************************************************************/
+
+/*************/
+/* Callbacks */
+/*************/
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (action != GLFW_PRESS) return;
+
+	// Exit on Q or ESCAPE
+	if (key == GLFW_KEY_Q || key == GLFW_KEY_ESCAPE) exit(EXIT_SUCCESS);
+	// Pause/resume on SPACE
+	else if (key == GLFW_KEY_SPACE) g_state = g_state == STATE_RUN ? STATE_PAUSE : STATE_RUN;
+	// Reset position on i
+	else if (key == GLFW_KEY_I) g_state = STATE_RESET;
+	// Change color on c
+	else if (key == GLFW_KEY_C) g_color_index++;
+	// Print help to standard output on h
+	else if (key == GLFW_KEY_H) print_help();
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (action != GLFW_PRESS) return;
+
+	// Change 3D model on right-click
+	if (button == GLFW_MOUSE_BUTTON_RIGHT) g_model_index++;
+	// Change polygon mode on left-click
+	else if (button == GLFW_MOUSE_BUTTON_LEFT) g_mode_index++;
+}
+
+/******************************************************************************/
+
+// Update object in the simulation
+void update(custom::Program program, custom::Model model) {
+	g_y_vel += g_y_acc;
+
+	g_x_pos += g_x_vel;
+	g_y_pos += g_y_vel;
+
+	auto transform = glm::mat4(1.0f);
+	transform = glm::translate(transform, glm::vec3(g_x_pos, g_y_pos, 0.0f));
+
+	auto new_min = transform * glm::vec4(1.0f, model.lowest_vertex, 1.0f, 1.0f);
+
+	if (new_min.y < GROUND) {
+		g_y_vel *= REVERSE_FACTOR * HIT_FACTOR;
+		g_y_pos = GROUND - model.lowest_vertex;
+	}
+
+	auto transform_loc = glGetUniformLocation(program.id, "transform");
+	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform));
+}
+
+// Reset object to initial position
+void reset(custom::Program program, custom::Model model) {
+	g_x_pos = 0;
+	g_y_pos = 0;
+	g_x_vel = 0.005f;
+	g_y_vel = 0;
+	g_y_acc = -0.00098f;
+
+	auto transform = glm::mat4(1.0f); // Identity
+
+	auto transform_loc = glGetUniformLocation(program.id, "transform");
+	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform));
+}
+
+// Draw the current scene
+void draw(custom::Program program, custom::Model model) {
+	glPolygonMode(GL_FRONT_AND_BACK, g_modes[g_mode_index % g_modes.size()]);
+
+	auto color_loc = glGetUniformLocation(program.id, "color_in");
+	glUniform4fv(color_loc, 1, glm::value_ptr(g_colors[g_color_index % g_colors.size()]));
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glBindVertexArray(model.VAO);
+	glDrawElements(GL_TRIANGLES, model.triangle_count * TRIANGLE_POINTS, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
+// Print help to standard output
+void print_help() {
+	cout << "Help:" << endl;
+	cout << "  + Keyboard Bindings:" << endl;
+	cout << "    - Q           -> Exit Program" << endl;
+	cout << "    - ESCAPE      -> Exit Program" << endl;
+	cout << "    - SPACE       -> Pause/Resume Simulation" << endl;
+	cout << "    - i           -> Reset Simulation Position" << endl;
+	cout << "    - c           -> Change Color" << endl;
+	cout << "    - h           -> Print This Help Message" << endl;
+	cout << "  + Mouse Bindings:" << endl;
+	cout << "    - RIGHT-CLICK -> Change 3D Model" << endl;
+	cout << "    - LEFT-CLICK  -> Change Polygon Mode" << endl;
+}
+/******************************************************************************/

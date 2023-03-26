@@ -9,6 +9,30 @@
 namespace custom {
 	using namespace std;
 
+	struct Program {
+		GLuint id;
+
+		/* Constructor */
+		Program(GLuint id) : id(id) { }
+
+		/* Destructor */
+		~Program() { }
+
+		/* Methods */
+
+		void use() const {
+			glUseProgram(id);
+		}
+
+		void set(const char* name, GLint value) const {         
+			glUniform1i(glGetUniformLocation(id, name), value);
+		}
+
+		void set(const char* name, GLfloat value) const { 
+			glUniform1f(glGetUniformLocation(id, name), value);
+		}
+	};
+
 	GLchar* gl_load_shader_code(const char* filename) {
 		auto file = fopen(filename, "r");
 
@@ -75,28 +99,28 @@ namespace custom {
 		return shader;
 	}
 
-	GLuint gl_make_program(const char* vertex_shader_filename, const char* fragment_shader_filename) {
+	Program gl_make_program(const char* vertex_shader_filename, const char* fragment_shader_filename) {
 		auto vertex_shader   = custom::gl_compile_shader(vertex_shader_filename,   GL_VERTEX_SHADER);
 		auto fragment_shader = custom::gl_compile_shader(fragment_shader_filename, GL_FRAGMENT_SHADER);
 	
-		auto program = glCreateProgram();
+		auto program_id = glCreateProgram();
 
-		glAttachShader(program, vertex_shader);
-		glAttachShader(program, fragment_shader);
-		glLinkProgram(program);
+		glAttachShader(program_id, vertex_shader);
+		glAttachShader(program_id, fragment_shader);
+		glLinkProgram(program_id);
 
 		glDeleteShader(vertex_shader);
 		glDeleteShader(fragment_shader);
 
 		// Check linking errors
 		GLint linked;
-		glGetProgramiv(program, GL_LINK_STATUS, &linked);
+		glGetProgramiv(program_id, GL_LINK_STATUS, &linked);
 		if(!linked) {
 			// Get error log
 			GLint log_size;
-			glGetShaderiv(program, GL_INFO_LOG_LENGTH, &log_size);
+			glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_size);
 			auto log = new GLchar[log_size];
-			glGetShaderInfoLog(program, log_size, NULL, log);
+			glGetProgramInfoLog(program_id, log_size, NULL, log);
 
 			cerr << "Failed to link shader program:" << endl;
 			cerr << "\t" << log << endl;
@@ -104,6 +128,8 @@ namespace custom {
 			delete[] log;
 			exit(EXIT_FAILURE);
 		}
+
+		Program program(program_id);
 
 		return program;
 	}
