@@ -17,12 +17,9 @@ using namespace std;
 #include "custom/gl_shader.cpp"  // Compile/link OpenGL shaders
 #include "custom/model.cpp"      // Model loading and utils
 #include "custom/gl_helpers.cpp" // OpenGL helpers
+#include "custom/glfw.cpp"       // Handle windowing operations and keyboard/mouse events
 
 /* External */
-
-// GLFW
-// Handles windowing operations and keyboard/mouse events
-#include "custom/glfw.cpp"
 
 // GLM
 // OpenGL math library

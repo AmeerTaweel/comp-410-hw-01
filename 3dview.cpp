@@ -1,66 +1,80 @@
-// Standard I/O
+/******************************************************************************/
+
+/***********/
+/* Imports */
+/***********/
+
+/* STD */
+
 #include <iostream>
+#include <fstream>
 
-// Load OpenGL function pointers
-#include "custom/gl_load.cpp"
+using namespace std;
 
-// Enable OpenGL Errors / Warnings
-#include "custom/gl_debug.cpp"
+/* Custom Imports */
 
-// Compile / Link OpenGL Shaders
-#include "custom/gl_shader.cpp"
+#include "custom/gl_load.cpp"    // Load OpenGL function pointers
+#include "custom/gl_debug.cpp"   // Enable OpenGL errors/warnings
+#include "custom/gl_shader.cpp"  // Compile/link OpenGL shaders
+#include "custom/model.cpp"      // Model loading and utils
+#include "custom/gl_helpers.cpp" // OpenGL helpers
+#include "custom/glfw.cpp"       // Handle windowing operations and keyboard/mouse events
 
-// Load Models / Model Utils
-#include "custom/model.cpp"
-
-// OpenGL Helpers
-#include "custom/gl_helpers.cpp"
-
-// GLFW
-// Handles windowing operations and keyboard/mouse events
-#include "custom/glfw.cpp"
+/* External */
 
 // GLM
-// GL Math Library
+// OpenGL math library
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <fstream>
+/******************************************************************************/
 
-// Use the standard library namespace by default
-using namespace std;
+/*************/
+/* Constants */
+/*************/
 
+// OpenGL version
 #define OPEN_GL_MAJOR_VERSION 3
 #define OPEN_GL_MINOR_VERSION 3
 
+// Shader locations
+#define V_SHADER "shaders/3dview/vertex_shader.glsl"
+#define F_SHADER "shaders/3dview/fragment_shader.glsl"
+
+// Window constants
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 800
 #define WINDOW_TITLE  "Simple 3D Model Viewer / Editor"
 
-#define V_SHADER "shaders/3dview/vertex_shader.glsl"
-#define F_SHADER "shaders/3dview/fragment_shader.glsl"
+// Trnaslation constants
+#define TRANSLATE_X 0.0f
+#define TRANSLATE_Y 0.0f
+#define TRANSLATE_Z 0.0f
 
-#define TRANSLATE_X -100.0f
-#define TRANSLATE_Y  090.0f
-#define TRANSLATE_Z  000.0f
+// Scaling constants
+#define SCALE_X 1.0f
+#define SCALE_Y 1.0f
+#define SCALE_Z 1.0f
 
-#define SCALE_X 0.0075f
-#define SCALE_Y 0.0075f
-#define SCALE_Z 0.0075f
+// Rotating constants
+#define ROTATE_X 0.0f
+#define ROTATE_Y 0.0f
+#define ROTATE_Z 0.0f
 
-#define ROTATE_X -90.0f
-#define ROTATE_Y  00.0f
-#define ROTATE_Z  90.0f
-
-#define MODEL_IN   "bunny.tlst"
-#define MODEL_OUT  "bunny.tlst.new"
+// Input/Output Constants
+#define MODEL_IN   "models/bunny.tlst"
+#define MODEL_OUT  "models/bunny.tlst.new"
 #define MODEL_SAVE 0
+
+/******************************************************************************/
 
 int main() {
 	/* Initialize GLFW */
 
 	custom::glfw_init(OPEN_GL_MAJOR_VERSION, OPEN_GL_MINOR_VERSION);
+	// Force floating mode in tiling window managers
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	/* Create window */
 
@@ -71,7 +85,7 @@ int main() {
 
 	custom::gl_load();
 
-	/* Enable OpenGL Errors / Warnings */
+	/* Enable OpenGL errors/warnings */
 
 	custom::gl_debug_enable();
 
@@ -88,24 +102,24 @@ int main() {
 
 	auto model = custom::model_tlst_load(MODEL_IN);
 
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	glGenVertexArrays(1, &model.VAO);  
+	glGenBuffers(1, &model.VBO); 
+	glGenBuffers(1, &model.EBO);
 
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindVertexArray(model.VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, model.VBO);
 	custom::glBufferDataV(GL_ARRAY_BUFFER, model.vertices, GL_STATIC_DRAW);
 
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.EBO);
 	custom::glBufferDataV(GL_ELEMENT_ARRAY_BUFFER, model.triangles, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, VERTEX_3D_COMPONENTS, GL_FLOAT, GL_TRUE, 0, (void*) 0);
 	glEnableVertexAttribArray(0);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Or GL_FILL
+	/* Set polygon mode */
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	/* Clear Buffer */
 
@@ -136,13 +150,13 @@ int main() {
 
 	/* Draw Model */
 
-	glBindVertexArray(VAO);
+	glBindVertexArray(model.VAO);
 	glDrawElements(GL_TRIANGLES, model.triangles.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
 	glfwSwapBuffers(window);
 
-	/* Save Model */
+	/* Save Model (Optionally) */
 
 	if (MODEL_SAVE) {
 		ofstream new_model;
@@ -152,13 +166,13 @@ int main() {
 		auto t = model.triangles;
 		new_model << model.vertex_count << " " << model.triangle_count << endl;
 		new_model << endl;
-		for (auto i = 0; i < v.size() - 2; i += 3) {
+		for (auto i = (size_t) 0; i < v.size() - 2; i += 3) {
 			auto old_v = glm::vec4(v[i], v[i + 1], v[i + 2], 1.0f);
 			auto new_v = transform * old_v;
 			new_model << new_v.x << " " << new_v.y << " " << new_v.z << endl;
 		}
 		new_model << endl;
-		for (auto i = 0; i < t.size() - 2; i += 3) {
+		for (auto i = (size_t) 0; i < t.size() - 2; i += 3) {
 			new_model << t[i] << " " << t[i + 1] << " " << t[i + 2] << endl;
 		}
 	}
@@ -174,3 +188,5 @@ int main() {
 	glfwTerminate();
 	return EXIT_SUCCESS;
 }
+
+/******************************************************************************/
