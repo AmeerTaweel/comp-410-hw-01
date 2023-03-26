@@ -3,15 +3,9 @@
 #ifndef __CUSTOM_MODELS__
 #define __CUSTOM_MODELS__
 
-// Standard I/O
-#include <iostream>
-
-// Vector Collection Type
-#include <vector>
-
-// Input File Stream
-// cin/cout-style input from files
 #include <fstream>
+#include <iostream>
+#include <vector>
 
 #define VERTEX_3D_COMPONENTS 3
 #define TRIANGLE_POINTS      3
@@ -19,6 +13,7 @@
 namespace custom {
 	using namespace std;
 
+	// Represents 3D Model
 	struct Model {
 		GLint vertex_count;
 		GLint triangle_count;
@@ -43,6 +38,7 @@ namespace custom {
 		~Model() { }
 	};
 
+	// Load a 3D model in TLST (custom) file format
 	Model model_tlst_load(const char* filename) {
 		ifstream file;
 		file.open(filename);
@@ -58,6 +54,7 @@ namespace custom {
 		// Read triangle vertex indices
 		for (auto& i : model.triangles) file >> i;
 
+		// Find the lowest vertex (y-axis)
 		auto v   = model.vertices;
 		auto min = v[1];
 

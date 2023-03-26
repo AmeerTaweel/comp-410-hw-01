@@ -3,7 +3,6 @@
 #ifndef __CUSTOM_GLFW__
 #define __CUSTOM_GLFW__
 
-// Standard I/O
 #include <iostream>
 
 // GLFW

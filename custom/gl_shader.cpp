@@ -3,7 +3,6 @@
 #ifndef __CUSTOM_GL_SHADER__
 #define __CUSTOM_GL_SHADER__
 
-// Standard I/O
 #include <iostream>
 
 namespace custom {
@@ -22,14 +21,6 @@ namespace custom {
 
 		void use() const {
 			glUseProgram(id);
-		}
-
-		void set(const char* name, GLint value) const {         
-			glUniform1i(glGetUniformLocation(id, name), value);
-		}
-
-		void set(const char* name, GLfloat value) const { 
-			glUniform1f(glGetUniformLocation(id, name), value);
 		}
 	};
 

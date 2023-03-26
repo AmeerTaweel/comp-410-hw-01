@@ -3,7 +3,6 @@
 #ifndef __CUSTOM_GL_LOAD__
 #define __CUSTOM_GL_LOAD__
 
-// Standard I/O
 #include <iostream>
 
 // Use OS-specific headers on macOS
