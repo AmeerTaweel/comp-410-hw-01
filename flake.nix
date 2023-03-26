@@ -14,7 +14,6 @@
           glfw
           glew
           glm
-          fmt
         ];
       };
     });
