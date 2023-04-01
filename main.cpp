@@ -88,6 +88,9 @@ vector<custom::Model> g_models;
 int g_mode_index = 0;
 vector<GLenum> g_modes = { GL_LINE, GL_FILL };
 
+// Program
+GLuint program;
+
 /******************************************************************************/
 
 /*************************/
@@ -99,9 +102,9 @@ void win_resize_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
-void update(custom::Program program, custom::Model model);
-void reset(custom::Program program, custom::Model model);
-void draw(custom::Program program, custom::Model model);
+void update(custom::Model model);
+void reset(custom::Model model);
+void draw(custom::Model model);
 void print_help();
 
 /******************************************************************************/
@@ -120,17 +123,14 @@ int main() {
 	// Enable OpenGL Errors / Warnings
 	custom::gl_debug_enable();
 
-	// Initialize viewport
-	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-
 	// Callbacks
 	glfwSetFramebufferSizeCallback(window, win_resize_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 	// Load program
-	auto program = custom::gl_make_program(V_SHADER, F_SHADER);
-	program.use();
+	program = custom::gl_make_program(V_SHADER, F_SHADER);
+	glUseProgram(program);
 
 	// Load models
 	g_models.push_back(custom::model_tlst_load("models/sphere.tlst"));
@@ -160,13 +160,13 @@ int main() {
 		auto model = g_models[g_model_index % g_models.size()];
 		if (g_state != STATE_PAUSE) {
 			if (g_state == STATE_RUN) {
-				update(program, model);
+				update(model);
 			} else {
-				reset(program, model);
+				reset(model);
 				g_state = STATE_PAUSE;
 			}
 		}
-		draw(program, model);
+		draw(model);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -208,14 +208,25 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 // Resize while keeping aspect-ratio
 void win_resize_callback(GLFWwindow* window, int width, int height) {
-	auto size = width < height ? width : height;
-	glViewport((width - size) / 2, (height - size) / 2, size, size);
+	// Use the entire window
+    glViewport(0, 0, width, height); 
+
+    // Construct projection matrix
+	auto x = height < width ? (GLfloat) width / (GLfloat) height : 1.0f;
+	auto y = width < height ? (GLfloat) height / (GLfloat) width : 1.0f;
+	auto z = 1.0f;
+
+	auto projection = glm::ortho(-x, x, -y, y, -z, z);
+    
+	// Send projection matrix to GPU
+	auto projection_loc = glGetUniformLocation(program, "projection");
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
 /******************************************************************************/
 
 // Update object in the simulation
-void update(custom::Program program, custom::Model model) {
+void update(custom::Model model) {
 	g_y_vel += g_y_acc;
 
 	g_x_pos += g_x_vel;
@@ -231,12 +242,12 @@ void update(custom::Program program, custom::Model model) {
 		g_y_pos = GROUND - model.lowest_vertex;
 	}
 
-	auto transform_loc = glGetUniformLocation(program.id, "transform");
+	auto transform_loc = glGetUniformLocation(program, "transform");
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform));
 }
 
 // Reset object to initial position
-void reset(custom::Program program, custom::Model model) {
+void reset(custom::Model model) {
 	g_x_pos = 0;
 	g_y_pos = 0;
 	g_x_vel = 0.005f;
@@ -245,15 +256,15 @@ void reset(custom::Program program, custom::Model model) {
 
 	auto transform = glm::mat4(1.0f); // Identity
 
-	auto transform_loc = glGetUniformLocation(program.id, "transform");
+	auto transform_loc = glGetUniformLocation(program, "transform");
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform));
 }
 
 // Draw the current scene
-void draw(custom::Program program, custom::Model model) {
+void draw(custom::Model model) {
 	glPolygonMode(GL_FRONT_AND_BACK, g_modes[g_mode_index % g_modes.size()]);
 
-	auto color_loc = glGetUniformLocation(program.id, "color_in");
+	auto color_loc = glGetUniformLocation(program, "color_in");
 	glUniform4fv(color_loc, 1, glm::value_ptr(g_colors[g_color_index % g_colors.size()]));
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

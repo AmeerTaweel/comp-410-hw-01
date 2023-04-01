@@ -8,22 +8,6 @@
 namespace custom {
 	using namespace std;
 
-	struct Program {
-		GLuint id;
-
-		/* Constructor */
-		Program(GLuint id) : id(id) { }
-
-		/* Destructor */
-		~Program() { }
-
-		/* Methods */
-
-		void use() const {
-			glUseProgram(id);
-		}
-	};
-
 	GLchar* gl_load_shader_code(const char* filename) {
 		auto file = fopen(filename, "r");
 
@@ -90,28 +74,28 @@ namespace custom {
 		return shader;
 	}
 
-	Program gl_make_program(const char* vertex_shader_filename, const char* fragment_shader_filename) {
+	GLuint gl_make_program(const char* vertex_shader_filename, const char* fragment_shader_filename) {
 		auto vertex_shader   = custom::gl_compile_shader(vertex_shader_filename,   GL_VERTEX_SHADER);
 		auto fragment_shader = custom::gl_compile_shader(fragment_shader_filename, GL_FRAGMENT_SHADER);
 	
-		auto program_id = glCreateProgram();
+		auto program = glCreateProgram();
 
-		glAttachShader(program_id, vertex_shader);
-		glAttachShader(program_id, fragment_shader);
-		glLinkProgram(program_id);
+		glAttachShader(program, vertex_shader);
+		glAttachShader(program, fragment_shader);
+		glLinkProgram(program);
 
 		glDeleteShader(vertex_shader);
 		glDeleteShader(fragment_shader);
 
 		// Check linking errors
 		GLint linked;
-		glGetProgramiv(program_id, GL_LINK_STATUS, &linked);
+		glGetProgramiv(program, GL_LINK_STATUS, &linked);
 		if(!linked) {
 			// Get error log
 			GLint log_size;
-			glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_size);
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_size);
 			auto log = new GLchar[log_size];
-			glGetProgramInfoLog(program_id, log_size, NULL, log);
+			glGetProgramInfoLog(program, log_size, NULL, log);
 
 			cerr << "Failed to link shader program:" << endl;
 			cerr << "\t" << log << endl;
@@ -119,8 +103,6 @@ namespace custom {
 			delete[] log;
 			exit(EXIT_FAILURE);
 		}
-
-		Program program(program_id);
 
 		return program;
 	}
