@@ -22,6 +22,8 @@ code in a way that supports macOS, but we don't have access to a macOS device
 and we don't guarantee that it works. Please evaluate our code on a Linux
 device.
 
+**NOTE:** We took permission from the professor to use GLM.
+
 ## Directory Structure
 
 - The root directory contains the top-level code `main.cpp` and `3dview.cpp`.
