@@ -30,6 +30,7 @@ device.
 - `custom` contains custom helper modules.
 - `models` contains 3D models in TLST (custom) format. More on TLST later.
 - `shaders` contains vertex and fragment shaders for `main.cpp` and `3dview.cpp`.
+- `photos` contains photos of the program to demonstrate that it works properly.
 
 ## Creative Additions
 
